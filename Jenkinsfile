@@ -3,12 +3,6 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
-            steps {
-                git 'https://github.com/khalidma95/voucher-project1.git'
-            }
-        }
-
         stage('Build Docker') {
             steps {
                 sh 'docker-compose down'
