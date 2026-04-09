@@ -4,8 +4,7 @@ WORKDIR /app
 
 # تثبيت الحزم أولاً للاستفادة من Docker cache
 COPY package*.json ./
-RUN npm ci --omit=dev
-
+RUN npm install
 # نسخ باقي الملفات
 COPY . .
 
