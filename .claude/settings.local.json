@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -type d ! -path */node_modules/* ! -path */.git/* ! -path */dist/*)",
+      "Bash(node -e \":*)",
+      "Bash(node -e ':*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase projects:create dstc-acc --display-name \"dstc-acc\")"
+    ]
+  }
+}
