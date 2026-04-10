@@ -12,6 +12,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voucherpass}
     volumes:
       - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # 👈 هنا الصح
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-voucheruser} -d ${POSTGRES_DB:-voucherdb}" ]
       interval: 5s
@@ -34,11 +36,11 @@ services:
       PORT: 5000
       NODE_ENV: production
     volumes:
-      - ./backend/uploads:/app/uploads # 🔥 المهم (حفظ الملفات)
+      - ./backend/uploads:/app/uploads
     expose:
       - "5000"
 
-  # ── الفرونت اند (nginx) ────────────────────────────────
+  # ── الفرونت اند ────────────────────────────────
   frontend:
     build:
       context: .
