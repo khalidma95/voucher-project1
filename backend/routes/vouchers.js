@@ -1,7 +1,8 @@
 const router = require('express').Router();
-const pool   = require('../db');
+const pool = require('../db');
 const { authMiddleware, adminOnly } = require('../middleware/auth');
-
+const fs = require('fs');
+const path = require('path');
 // helper لإضافة إشعار
 async function addNotification(client, { type, icon, title, detail, username }) {
   await client.query(
@@ -36,8 +37,8 @@ router.get('/', authMiddleware, async (req, res) => {
     let q = 'SELECT * FROM vouchers WHERE 1=1';
     const params = [];
     if (source) { params.push(source); q += ` AND source=$${params.length}`; }
-    if (type)   { params.push(type);   q += ` AND type=$${params.length}`; }
-    else        { q += ` AND type<>'sarf'`; }
+    if (type) { params.push(type); q += ` AND type=$${params.length}`; }
+    else { q += ` AND type<>'sarf'`; }
     q += ' ORDER BY created_at DESC';
     const { rows } = await pool.query(q, params);
     res.json(rows);
@@ -199,13 +200,13 @@ router.put('/:id', authMiddleware, async (req, res) => {
        WHERE id=$9 RETURNING *`,
       [
         newAmt,
-        chk_no   !== undefined ? chk_no   : v.chk_no,
-        doc_no   !== undefined ? doc_no   : v.doc_no,
+        chk_no !== undefined ? chk_no : v.chk_no,
+        doc_no !== undefined ? doc_no : v.doc_no,
         doc_date !== undefined ? doc_date : v.doc_date,
-        details  !== undefined ? details  : v.details,
-        payee    !== undefined ? payee    : v.payee,
-        notes    !== undefined ? notes    : v.notes,
-        vRows    !== undefined ? JSON.stringify(vRows) : v.rows,
+        details !== undefined ? details : v.details,
+        payee !== undefined ? payee : v.payee,
+        notes !== undefined ? notes : v.notes,
+        vRows !== undefined ? JSON.stringify(vRows) : v.rows,
         req.params.id,
       ]
     );
@@ -223,13 +224,37 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // PATCH /api/vouchers/:id/archive — حفظ صورة الأرشيف
 router.patch('/:id/archive', authMiddleware, async (req, res) => {
   const { archive_img } = req.body;
+
   try {
+    let fileName = null;
+
+    if (archive_img && archive_img.startsWith('data:')) {
+      const base64Data = archive_img.split(',')[1];
+
+      fileName = `voucher_${Date.now()}.pdf`;
+
+      const uploadPath = path.join(__dirname, '..', 'uploads');
+
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath);
+      }
+
+      const filePath = path.join(uploadPath, fileName);
+
+      fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    }
+
     const { rows } = await pool.query(
-      'UPDATE vouchers SET archive_img=$1 WHERE id=$2 RETURNING *',
-      [archive_img, req.params.id]
-    );
+  `UPDATE vouchers 
+   SET archive_img = COALESCE($1, archive_img) 
+   WHERE id=$2 RETURNING *`,
+  [fileName, req.params.id]
+);
+
     if (!rows[0]) return res.status(404).json({ error: 'غير موجود' });
+
     res.json(rows[0]);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
