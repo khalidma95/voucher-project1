@@ -2,17 +2,30 @@ pipeline {
     agent any
 
     stages {
-
-        stage('Build Docker') {
+        stage('Checkout') {
             steps {
-                sh 'docker-compose down'
-                sh 'docker-compose up -d --build'
+                git 'https://github.com/khalidma95/voucher-project1.git'
             }
         }
 
-        stage('Check') {
+        stage('Clean Old Containers') {
             steps {
-                sh 'docker ps'
+                sh '''
+                docker rm -f voucher_db || true
+                docker rm -f voucher_backend || true
+                docker rm -f voucher_frontend || true
+                '''
+            }
+        }
+
+        stage('Build & Deploy') {
+            steps {
+                sh '''
+                cd $WORKSPACE
+
+                docker-compose down
+                docker-compose up -d --build
+                '''
             }
         }
     }
